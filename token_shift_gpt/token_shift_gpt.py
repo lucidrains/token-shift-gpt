@@ -37,6 +37,14 @@ def shift_tokens(x, amt, eps = 1e-5):
 
 # helper classes
 
+class Residual(nn.Module):
+    def __init__(self, fn):
+        super().__init__()
+        self.fn = fn
+
+    def forward(self, x):
+        return self.fn(x) + x
+
 class FeedForward(nn.Module):
     def __init__(
         self,
@@ -97,7 +105,7 @@ class TokenShiftGPT(nn.Module):
         self.pos_emb = nn.Embedding(max_seq_len, dim)
 
         self.net = nn.Sequential(
-            *[FeedForward(dim = dim, num_shifts = num_shifts, mult = ff_mult, max_seq_len = max_seq_len) for _ in range(depth)],
+            *[Residual(FeedForward(dim = dim, num_shifts = num_shifts, mult = ff_mult, max_seq_len = max_seq_len)) for _ in range(depth)],
             nn.LayerNorm(dim),
             nn.Linear(dim, num_tokens)
         )
