@@ -25,8 +25,7 @@ model = TokenShiftGPT(
 )
 
 x = torch.randint(0, 256, (1, 1024))
-print(model(x).shape)
-
+logits = model(x) # (1, 1024, 256)
 ```
 
 ## Citations
