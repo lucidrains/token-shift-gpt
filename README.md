@@ -2,7 +2,7 @@
 
 Implementation of Token Shift GPT - An autoregressive model that relies solely on shifting along the sequence dimension and feedforwards.
 
-Update: Inexplicably, it actually works quite well. The feedforward module follows the same design as `gMLP`, except the feature dimension of the gate tensor is divided up into `log2(seq_len) - 1` chunks, and the mean pool of the past consecutive segments (length 1, 2, 4, 8, etc. into the past) are shifted into each chunk before a projection along the feature dimension.
+Update: Inexplicably, it actually works quite well. The feedforward module follows the same design as `gMLP`, except the feature dimension of the gate tensor is divided up into `log2(seq_len)` chunks, and the mean pool of the past consecutive segments (length 1, 2, 4, 8, etc. into the past) are shifted into each chunk before a projection along the feature dimension.
 
 ## Install
 
