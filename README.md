@@ -1,19 +1,55 @@
-## Token Shift GPT (wip)
+## Token Shift GPT
 
 Implementation of Token Shift GPT - An autoregressive model that relies solely on shifting along the sequence dimension and feedforwards.
 
-## Citations
+Update: Inexplicably, it actually works quite well. The feedforward module follows the same design as `gMLP`, except the gate is divided up into `log2(seq_len) - 1` chunks, and the mean pool of the past consecutive segments (length 1, 2, 4, 8, etc. into the past) are shifted in before a projection along the feature dimension.
 
-This was largely inspired by the two works below
+## Install
+
+```bash
+$ pip install token-shift-gpt
+```
+
+## Usage
+
+```python
+import torch
+from token_shift_gpt import TokenShiftGPT
+
+model = TokenShiftGPT(
+    num_tokens = 256,
+    dim = 512,
+    max_seq_len = 1024,
+    depth = 12,
+    ff_mult = 8   # when working with small model dimensions, you may want to increase the intermediate feedforward dimension (here, 8x instead of the usual 4x), so the learning is not bottlenecked by the dimensions of the shifted chunk
+)
+
+x = torch.randint(0, 256, (1, 1024))
+print(model(x).shape)
+
+```
+
+## Citations
 
 ```bibtex
 @misc{yu2021s2mlp,
-  title   = {S$^2$-MLP: Spatial-Shift MLP Architecture for Vision}, 
-  author  = {Tan Yu and Xu Li and Yunfeng Cai and Mingming Sun and Ping Li},
-  year    = {2021},
-  eprint  = {2106.07477},
-  archivePrefix = {arXiv},
-  primaryClass = {cs.CV}
+    title   = {S$^2$-MLP: Spatial-Shift MLP Architecture for Vision}, 
+    author  = {Tan Yu and Xu Li and Yunfeng Cai and Mingming Sun and Ping Li},
+    year    = {2021},
+    eprint  = {2106.07477},
+    archivePrefix = {arXiv},
+    primaryClass = {cs.CV}
+}
+```
+
+```bibtex
+@misc{liu2021pay,
+    title   = {Pay Attention to MLPs}, 
+    author  = {Hanxiao Liu and Zihang Dai and David R. So and Quoc V. Le},
+    year    = {2021},
+    eprint  = {2105.08050},
+    archivePrefix = {arXiv},
+    primaryClass = {cs.LG}
 }
 ```
 

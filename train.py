@@ -40,7 +40,8 @@ model = TokenShiftGPT(
     num_tokens = 256,
     max_seq_len = SEQ_LEN,
     dim = 512,
-    depth = 8
+    depth = 8,
+    ff_mult = 8
 )
 
 model = AutoregressiveWrapper(model)
