@@ -35,6 +35,18 @@ def shift_tokens(x, amt, eps = 1e-5):
 
     return torch.cat((*shifts, x_pass), dim = -1)
 
+def discounted_cumsum(t, gamma):
+    try:
+        from torch_discounted_cumsum import discounted_cumsum_left
+    except ImportError:
+        print('unable to import torch_discounted_cumsum - please run `pip install torch-discounted-cumsum`')
+
+    b, n, d = t.shape
+    t = rearrange(t, 'b n d -> (b d) n')
+    t = discounted_cumsum_left(t, gamma)
+    t = rearrange(t, '(b d) n -> b n d', b = b)
+    return t
+
 # helper classes
 
 class Residual(nn.Module):
@@ -53,7 +65,9 @@ class FeedForward(nn.Module):
         max_seq_len,
         num_shifts,
         mult = 4,
-        eps = 1e-3
+        eps = 1e-3,
+        use_discounted_cumsum = False,
+        discount_gamma = 0.9
     ):
         super().__init__()
         self.norm = nn.LayerNorm(dim)
@@ -61,6 +75,12 @@ class FeedForward(nn.Module):
         self.project_in = nn.Sequential(
             nn.Linear(dim, dim * mult),
             nn.GELU()
+        )
+        self.gate = nn.Sequential(
+            nn.Linear(dim, dim // 4),
+            nn.GELU(),
+            nn.Linear(dim // 4, dim),
+            nn.Sigmoid()
         )
 
         self.num_shifts = num_shifts
@@ -74,15 +94,27 @@ class FeedForward(nn.Module):
 
         self.project_out = nn.Linear(hidden_dim, dim)
 
+        # for using discounted cumsum approach
+
+        self.use_discounted_cumsum = use_discounted_cumsum
+        self.discount_gamma = discount_gamma
+
     def forward(self, x):
         x = self.norm(x)
+
         x = self.project_in(x)
+
         x, gate = x.chunk(2, dim = -1)
 
         gate = self.gate_norm(gate)
-        shifted_gate = shift_tokens(gate, self.num_shifts)
-        x = x * self.to_gate(shifted_gate)
 
+        if self.use_discounted_cumsum:
+            gate = shift(gate, 1, dim = -2)
+            gate = discounted_cumsum(gate, self.discount_gamma)
+        else:
+            gate = shift_tokens(gate, self.num_shifts)
+
+        x = x * self.to_gate(gate)
         return self.project_out(x)
 
 # classes
@@ -95,7 +127,9 @@ class TokenShiftGPT(nn.Module):
         dim,
         max_seq_len,
         depth,
-        ff_mult = 4
+        ff_mult = 4,
+        use_discounted_cumsum = False,
+        discount_gamma = 0.9
     ):
         super().__init__()
         self.seq_len = max_seq_len
@@ -105,7 +139,7 @@ class TokenShiftGPT(nn.Module):
         self.pos_emb = nn.Embedding(max_seq_len, dim)
 
         self.net = nn.Sequential(
-            *[Residual(FeedForward(dim = dim, num_shifts = num_shifts, mult = ff_mult, max_seq_len = max_seq_len)) for _ in range(depth)],
+            *[Residual(FeedForward(dim = dim, num_shifts = num_shifts, mult = ff_mult, max_seq_len = max_seq_len, use_discounted_cumsum = use_discounted_cumsum, discount_gamma = discount_gamma)) for _ in range(depth)],
             nn.LayerNorm(dim),
             nn.Linear(dim, num_tokens)
         )

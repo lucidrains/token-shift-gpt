@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
   name = 'token-shift-gpt',
   packages = find_packages(),
-  version = '0.0.2',
+  version = '0.0.3',
   license='MIT',
   description = 'Token Shift GPT - Pytorch',
   author = 'Phil Wang',
