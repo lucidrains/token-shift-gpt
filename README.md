@@ -61,6 +61,6 @@ logits = model(x) # (1, 1024, 256)
     publisher    = {Zenodo},
     version      = {0.01},
     doi          = {10.5281/zenodo.5196578},
-    url          = {https://doi.org/10.5281/zenodo.5196578%7D
+    url          = {https://doi.org/10.5281/zenodo.5196578}
 }
 ```
