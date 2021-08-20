@@ -28,6 +28,34 @@ x = torch.randint(0, 256, (1, 1024))
 logits = model(x) # (1, 1024, 256)
 ```
 
+To use the discounted cumulative sum approach (which only uses one chunk and seems to be just as effective as the above), just set `use_discounted_cumsum = True`
+
+First install an additional library
+
+```bash
+$ pip install torch-discounted-cumsum
+```
+
+Then
+
+```python
+import torch
+from token_shift_gpt import TokenShiftGPT
+
+model = TokenShiftGPT(
+    num_tokens = 256,
+    dim = 512,
+    max_seq_len = 1024,
+    depth = 12,
+    ff_mult = 8,
+    use_discounted_cumsum = True,
+    discounted_gamma = 0.9              # gamma factor for discount
+)
+
+x = torch.randint(0, 256, (1, 1024))
+logits = model(x) # (1, 1024, 256)
+```
+
 ## Citations
 
 ```bibtex
