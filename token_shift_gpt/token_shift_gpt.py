@@ -76,12 +76,6 @@ class FeedForward(nn.Module):
             nn.Linear(dim, dim * mult),
             nn.GELU()
         )
-        self.gate = nn.Sequential(
-            nn.Linear(dim, dim // 4),
-            nn.GELU(),
-            nn.Linear(dim // 4, dim),
-            nn.Sigmoid()
-        )
 
         self.num_shifts = num_shifts
         hidden_dim = dim * mult // 2
